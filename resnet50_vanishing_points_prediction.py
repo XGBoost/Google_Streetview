@@ -9,6 +9,8 @@ from torchvision import datasets, transforms
 import torch.utils.data as data
 from torch.autograd import Variable
 
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 kwargs = {'num_workers': 1, 'pin_memory': True}
 batch_size=32
 
@@ -52,7 +54,7 @@ class myImageFloder(data.Dataset):  # Class inheritance
             cls = line.split()  # cls is a list
             fn = cls.pop(0)
             if os.path.isfile(os.path.join(root, fn)):
-                imgs.append((fn, tuple([float(v) for v in cls[len(cls)-2:len(cls)-1]])))
+                imgs.append((fn, tuple([float(v) for v in cls[:len(cls)-1]])))
                 # access the last label
                 # images is the list,and the content is the tuple, every image corresponds to a label
                 # despite the label's dimension
@@ -241,10 +243,10 @@ def resnet50(pretrained=False):
     return model
 
 # cnn = DataParallel(resnet50(pretrained=True))
-cnn = resnet50(pretrained=True)  # load the pretrained weight to initialize the weight
+cnn = resnet50(pretrained=False)  # load the pretrained weight to initialize the weight
 #for param in cnn.parameters():
 #    param.requires_grad=False
-cnn.fc=nn.Linear(2048,1)
+cnn.fc=nn.Linear(2048,9)
 cnn.cuda()
 # print(cnn)
 # print(cnn.fc)
@@ -255,7 +257,7 @@ cnn.cuda()
 criterion = nn.MSELoss().cuda()
 lr = 0.001
 optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
-print('resnet_finetune')
+print('resnet_no_finetune_predict_vanishing_points')
 for epoch in (range(100)):
     for i, (images, labels) in enumerate(train_loader):
         # run all the image in the dataloader, and the data is all different
@@ -271,14 +273,14 @@ for epoch in (range(100)):
         optimizer.step()
         # print(i)
         if (i + 1) % 5 == 0:  # every 5 iteration will output a train loss
-            print("Epoch [%d/%d], Iter [%d/%d] Train_Loss: %.4f" % (epoch + 1, 80, i + 1, 2343, loss.data[0]))
+            print("Epoch [%d/%d], Iter [%d/%d] Train_Loss: %.4f" % (epoch + 1, 100, i + 1, 2343, loss.data[0]))
         # test the data
             for i, (test_images, test_labels) in enumerate(test_loader):
                     test_images = Variable(test_images.cuda())
                     test_labels = Variable(test_labels.cuda())
                     outputs = cnn(test_images)
                     loss=criterion(outputs, test_labels)
-                    print("Epoch [%d/%d], Iter [%d/%d] Test_Loss: %.4f" % (epoch + 1, 80, i + 1, 781, loss.data[0]))
+                    print("Epoch [%d/%d], Iter [%d/%d] Test_Loss: %.4f" % (epoch + 1, 100, i + 1, 781, loss.data[0]))
                     break
         # Decaying Learning Rate
     if (epoch + 1) % 20 == 0:

@@ -311,6 +311,24 @@ print('Test Accuracy of the model on the 10000 test images: %d %%' % (100 * corr
 # Save the Trained Model
 torch.save(cnn.state_dict(), 'cnn.pkl')
 '''
+'''
 import torch
 model = torch.load('cnn.pkl')
 print(model)
+'''
+import os
+label="/home/ying/data/google_streetview_train_test1/label.txt"
+root="/home/ying/data/google_streetview_train_test1"
+c = 0
+imgs = []
+class_names = ['regression']
+for line in label:  # label is a list
+    cls = line.split()  # cls is a list
+    fn = cls.pop(0)
+    if os.path.isfile(os.path.join(root, fn)):
+        imgs.append((fn, tuple([float(v) for v in cls[:len(cls) - 2]])))
+        # access the last label
+        # images is the list,and the content is the tuple, every image corresponds to a label
+        # despite the label's dimension
+        # we can use the append way to append the element for list
+    c = c + 1
